@@ -833,6 +833,7 @@
 
   function startStop() {
     if (!currentType) return;
+    unlockAudio();
     if (running) {
       clearInterval(interval); running = false;
       btnStart.textContent = t('btn.continue');
@@ -900,28 +901,39 @@
   function stopTransitions()   { bar.style.transition = 'none'; ring.style.transition = 'none'; }
 
   // ── Sound ──────────────────────────────────────────────────────────────────
+  function unlockAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
   function playBeep() {
     try {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      [523,659,784,1047].forEach((freq, i) => {
-        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.type = 'sine'; osc.frequency.value = freq;
-        const t_ = audioCtx.currentTime + i * 0.22;
-        gain.gain.setValueAtTime(0, t_);
-        gain.gain.linearRampToValueAtTime(0.35, t_ + 0.05);
-        gain.gain.linearRampToValueAtTime(0,    t_ + 0.20);
-        osc.start(t_); osc.stop(t_ + 0.25);
-      });
+      unlockAudio();
+      const doPlay = () => {
+        [523,659,784,1047].forEach((freq, i) => {
+          const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.type = 'sine'; osc.frequency.value = freq;
+          const t_ = audioCtx.currentTime + i * 0.22;
+          gain.gain.setValueAtTime(0, t_);
+          gain.gain.linearRampToValueAtTime(0.35, t_ + 0.05);
+          gain.gain.linearRampToValueAtTime(0,    t_ + 0.20);
+          osc.start(t_); osc.stop(t_ + 0.25);
+        });
+      };
+      // If still suspended after unlock attempt, wait for resume then play
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().then(doPlay).catch(() => {});
+      } else {
+        doPlay();
+      }
     } catch(e) {}
   }
   function vibrate() {
     if ('vibrate' in navigator) navigator.vibrate([200,100,200,100,400]);
   }
-  document.addEventListener('touchstart', () => {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-  }, { once: true });
+  // Unlock AudioContext on any user interaction (touchstart + click covers all devices)
+  document.addEventListener('touchstart', unlockAudio);
+  document.addEventListener('click',      unlockAudio);
 
   // ── Williams modal ─────────────────────────────────────────────────────────
   function openWilliams()  { document.getElementById('williamsModal').classList.add('open'); }

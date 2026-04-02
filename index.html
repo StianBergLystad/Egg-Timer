@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🥚 Egg-Timer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(160deg, #fff8e1 0%, #fff3cd 50%, #ffe082 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px 16px 40px;
+    }
+
+    .app {
+      background: #ffffff;
+      border-radius: 32px;
+      box-shadow: 0 8px 40px rgba(255,180,0,0.18), 0 2px 8px rgba(0,0,0,0.07);
+      padding: 32px 24px 36px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* ── Title ── */
+    .app-title {
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: #b8860b;
+      letter-spacing: -0.5px;
+      margin-bottom: 3px;
+    }
+    .app-subtitle {
+      font-size: 0.88rem;
+      color: #a08020;
+      margin-bottom: 24px;
+    }
+
+    /* ── Egg-type buttons ── */
+    .egg-types {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .egg-btn {
+      flex: 1;
+      border: 2.5px solid #ffe082;
+      background: #fffde7;
+      border-radius: 20px;
+      padding: 16px 6px 12px;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, background .15s, border-color .15s;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .egg-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(255,180,0,.22); }
+    .egg-btn.active {
+      border-color: #f9a825;
+      background: linear-gradient(145deg,#fff8e1,#ffecb3);
+      box-shadow: 0 4px 18px rgba(249,168,37,.35);
+      transform: translateY(-2px);
+    }
+    .egg-btn .icon  { font-size: 2.2rem; line-height: 1; }
+    .egg-btn .label { font-size: 0.79rem; font-weight: 700; color: #7a5c00; }
+    .egg-btn .mins  { font-size: 0.74rem; color: #b8a040; font-weight: 600; transition: color .2s; }
+    .egg-btn.active .mins { color: #e65100; }
+
+    /* ── Settings panel ── */
+    .settings {
+      background: #fffde7;
+      border: 1.5px solid #ffe082;
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .setting-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .setting-lbl {
+      font-size: 0.73rem;
+      font-weight: 700;
+      color: #a08020;
+      white-space: nowrap;
+      width: 68px;
+      text-align: left;
+    }
+    .pill-group {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+    }
+    .pill {
+      flex: 1;
+      padding: 9px 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 2px solid #ffe082;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #a08020;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s, transform .1s;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+      line-height: 1.25;
+    }
+    .pill:active { transform: scale(.96); }
+    .pill.active {
+      background: linear-gradient(135deg,#ffd54f,#f9a825);
+      border-color: #f9a825;
+      color: #5c3d00;
+      box-shadow: 0 2px 8px rgba(249,168,37,.3);
+    }
+    .pill .pill-sub { display: block; font-size: 0.65rem; opacity: .75; font-weight: 500; }
+
+    /* ── Formula hint ── */
+    .formula-hint {
+      font-size: 0.72rem;
+      color: #b8a040;
+      margin-bottom: 16px;
+      min-height: 1.2em;
+      font-style: italic;
+      transition: opacity .3s;
+    }
+
+    /* ── Done alert ── */
+    .done-alert {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg,#fff8e1,#fff3cd);
+      border: 2px solid #f9a825;
+      border-radius: 20px;
+      padding: 20px 16px;
+      margin-bottom: 20px;
+      animation: popIn .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    .done-alert.visible { display: flex; }
+    .done-icon { font-size: 2.8rem; animation: bounce .6s ease infinite alternate; }
+    .done-text { font-size: 1.25rem; font-weight: 800; color: #b8860b; }
+    .done-sub  { font-size: 0.83rem; color: #a08020; }
+
+    /* ── Timer ring ── */
+    .timer-section { margin-bottom: 16px; }
+    .timer-ring-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .timer-svg {
+      transform: rotate(-90deg);
+      filter: drop-shadow(0 4px 12px rgba(249,168,37,.25));
+    }
+    .ring-bg       { fill: none; stroke: #fff3cd; stroke-width: 10; }
+    .ring-progress {
+      fill: none;
+      stroke: url(#ringGradient);
+      stroke-width: 10;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear;
+    }
+    .timer-text {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .timer-digits {
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: #b8860b;
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+    .timer-label {
+      font-size: 0.72rem;
+      color: #c8a020;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+    .running .timer-digits {
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    /* ── Manual adjust ── */
+    .adjust-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+    }
+    .adjust-row.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .btn-adj {
+      padding: 9px 13px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 2px solid #ffe082;
+      border-radius: 12px;
+      background: #fffde7;
+      color: #7a5c00;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, transform .1s;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+    }
+    .btn-adj:hover  { background: #fff3cd; border-color: #f9a825; }
+    .btn-adj:active { transform: scale(.94); }
+    .btn-adj:disabled { opacity: .35; cursor: not-allowed; }
+    .adj-label {
+      font-size: 0.7rem;
+      color: #b8a040;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ── Progress bar ── */
+    .progress-bar-wrap {
+      background: #fff3cd;
+      border-radius: 100px;
+      height: 10px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg,#ffe082,#f9a825,#fb8c00);
+      border-radius: 100px;
+      width: 0%;
+      transition: width 1s linear;
+    }
+
+    /* ── Controls ── */
+    .controls { display: flex; gap: 12px; }
+    .btn-start {
+      flex: 1;
+      padding: 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: transform .12s, box-shadow .12s, opacity .2s;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+      background: linear-gradient(135deg,#ffd54f,#f9a825);
+      color: #5c3d00;
+      box-shadow: 0 4px 16px rgba(249,168,37,.4);
+    }
+    .btn-start:active  { transform: scale(.97); }
+    .btn-start:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+    .btn-reset {
+      padding: 18px 22px;
+      font-size: 1.1rem;
+      border: 2px solid #ffe082;
+      border-radius: 16px;
+      cursor: pointer;
+      background: #fffde7;
+      color: #a08020;
+      transition: background .15s, transform .12s;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+    .btn-reset:active { transform: scale(.97); }
+
+    /* ── Williams modal ── */
+    .williams-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 6px;
+      border-radius: 50%;
+      color: #c8a020;
+      vertical-align: middle;
+      transition: transform .15s;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+    .williams-btn:hover { transform: rotate(20deg) scale(1.2); }
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(3px);
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 28px 24px 24px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 12px 50px rgba(0,0,0,0.22);
+      animation: popIn .35s cubic-bezier(.34,1.56,.64,1);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 14px; right: 16px;
+      background: #fff3cd;
+      border: none;
+      border-radius: 50%;
+      width: 32px; height: 32px;
+      font-size: 1rem;
+      cursor: pointer;
+      color: #a08020;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .modal-close:hover { background: #ffe082; }
+
+    .modal h2 { font-size: 1.15rem; color: #b8860b; margin-bottom: 4px; }
+    .modal .modal-sub { font-size: 0.78rem; color: #a08020; margin-bottom: 16px; }
+
+    .formula-box {
+      background: linear-gradient(135deg,#fffde7,#fff8e1);
+      border: 1.5px solid #ffe082;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      color: #5c3d00;
+      line-height: 1.9;
+      text-align: left;
+    }
+    .formula-box .f-main {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #b8860b;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .formula-box .f-var { color: #e65100; }
+    .formula-box .f-comment { color: #a08020; font-style: italic; font-size: 0.75rem; }
+
+    .modal-joke {
+      background: #fff3cd;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.82rem;
+      color: #7a5c00;
+      line-height: 1.5;
+      text-align: left;
+    }
+    .modal-joke .joke-head {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #b8860b;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .modal-source {
+      margin-top: 12px;
+      font-size: 0.7rem;
+      color: #b8a040;
+      text-align: center;
+    }
+
+    /* ── Animations ── */
+    @keyframes popIn  { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+    @keyframes pulse  { 0%,100% { opacity: 1; } 50% { opacity: .65; } }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="app-title">🥚 Egg-Timer</div>
+  <div class="app-subtitle">
+    Velg type, størrelse og starttemperatur
+    <button class="williams-btn" onclick="openWilliams()" title="Hva er Williams-formelen?">🔬</button>
+  </div>
+
+  <!-- Egg type buttons -->
+  <div class="egg-types">
+    <button class="egg-btn" data-type="soft" onclick="selectType(this)">
+      <span class="icon">🥚</span>
+      <span class="label">Bløtkokt</span>
+      <span class="mins" id="lbl-soft">6:00</span>
+    </button>
+    <button class="egg-btn" data-type="smiling" onclick="selectType(this)">
+      <span class="icon">😊</span>
+      <span class="label">Smilende</span>
+      <span class="mins" id="lbl-smiling">8:00</span>
+    </button>
+    <button class="egg-btn" data-type="hard" onclick="selectType(this)">
+      <span class="icon">💪</span>
+      <span class="label">Hardkokt</span>
+      <span class="mins" id="lbl-hard">10:00</span>
+    </button>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings">
+    <div class="setting-row">
+      <span class="setting-lbl">Størrelse</span>
+      <div class="pill-group">
+        <button class="pill" data-group="size" data-val="small"  onclick="setSetting(this)">
+          Liten<span class="pill-sub">~50 g</span>
+        </button>
+        <button class="pill active" data-group="size" data-val="medium" onclick="setSetting(this)">
+          Medium<span class="pill-sub">~60 g</span>
+        </button>
+        <button class="pill" data-group="size" data-val="large"  onclick="setSetting(this)">
+          Stor<span class="pill-sub">~70 g</span>
+        </button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-lbl">Starttemp</span>
+      <div class="pill-group">
+        <button class="pill" data-group="temp" data-val="fridge" onclick="setSetting(this)">
+          🧊 Kjøleskap<span class="pill-sub">~4 °C</span>
+        </button>
+        <button class="pill active" data-group="temp" data-val="room" onclick="setSetting(this)">
+          🌡️ Romtemp<span class="pill-sub">~20 °C</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formula hint -->
+  <div class="formula-hint" id="formulaHint"></div>
+
+  <!-- Done alert -->
+  <div class="done-alert" id="doneAlert">
+    <div class="done-icon">✅</div>
+    <div class="done-text">Egget er klart!</div>
+    <div class="done-sub" id="doneSub">Nyt måltidet ditt 🍽️</div>
+  </div>
+
+  <!-- Timer ring -->
+  <div class="timer-section" id="timerSection">
+    <div class="timer-ring-wrap">
+      <svg class="timer-svg" width="174" height="174" viewBox="0 0 174 174">
+        <defs>
+          <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#ffe082"/>
+            <stop offset="50%"  stop-color="#f9a825"/>
+            <stop offset="100%" stop-color="#fb8c00"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg"       cx="87" cy="87" r="75"/>
+        <circle class="ring-progress" id="ringProgress" cx="87" cy="87" r="75"
+          stroke-dasharray="471" stroke-dashoffset="471"/>
+      </svg>
+      <div class="timer-text">
+        <span class="timer-digits" id="timerDigits">--:--</span>
+        <span class="timer-label"  id="timerLabel">⏳ Klar</span>
+      </div>
+    </div>
+
+    <!-- Manual time adjustment -->
+    <div class="adjust-row" id="adjustRow">
+      <button class="btn-adj" onclick="adjustTime(-60)" id="adjMinus60">−1 min</button>
+      <button class="btn-adj" onclick="adjustTime(-30)" id="adjMinus30">−30 s</button>
+      <span class="adj-label">±&nbsp;tid</span>
+      <button class="btn-adj" onclick="adjustTime(30)"  id="adjPlus30">+30 s</button>
+      <button class="btn-adj" onclick="adjustTime(60)"  id="adjPlus60">+1 min</button>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn-start" id="btnStart" onclick="startStop()" disabled>▶ Start</button>
+    <button class="btn-reset" onclick="reset()" title="Nullstill">↺</button>
+  </div>
+</div>
+
+<!-- Williams formula modal -->
+<div class="modal-backdrop" id="williamsModal" onclick="closeWilliamsOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeWilliams()">✕</button>
+    <h2>🔬 Williams-formelen</h2>
+    <p class="modal-sub">Den vitenskapelige grunnen til at du ikke trenger å gjette på koketiden</p>
+
+    <div class="formula-box">
+      <span class="f-main">t = K · <span class="f-var">M</span><sup>2/3</sup> · ln( (<span class="f-var">T<sub>w</sub></span> − <span class="f-var">T<sub>0</sub></span>) / (<span class="f-var">T<sub>w</sub></span> − <span class="f-var">T<sub>y</sub></span>) )</span>
+      <span><span class="f-var">M</span>  = eggmasse (g)</span><br>
+      <span><span class="f-var">T<sub>w</sub></span> = kokende vann = 100 °C</span><br>
+      <span><span class="f-var">T<sub>0</sub></span> = starttemperatur på egget</span><br>
+      <span><span class="f-var">T<sub>y</sub></span> = ønsket plommetemperatur</span><br>
+      <span><span class="f-var">K</span>  = 30.47 <span class="f-comment">(kalibreringskonstant)</span></span>
+    </div>
+
+    <div class="modal-joke">
+      <span class="joke-head">😂 Sann historie fra universitetet</span>
+      Charles Williams, fysiker ved Universitetet i Exeter, brukte trolig mer tid på å
+      utlede denne formelen enn han noensinne hadde brukt på å koke et egg feil.
+      Moralen? <strong>Noen mennesker kjøper eggeklokke. Andre tar en doktorgrad.</strong>
+      <br><br>
+      Du bruker heldigvis appen hans resultat havnet i. 🥚📐
+    </div>
+
+    <p class="modal-source">
+      Basert på: C.D.H. Williams, «The Mathematics of Eggs» · Univ. of Exeter
+    </p>
+  </div>
+</div>
+
+<script>
+  // ── Constants ──────────────────────────────────────────────────────────────
+  const CIRCUMFERENCE = 2 * Math.PI * 75; // ≈ 471.2
+
+  // Williams-formula calibration constant (k), derived so that:
+  //   soft (Ty=63°C), medium (60g), room (20°C) → 360 s (6 min)
+  //   k = 360 / (60^(2/3) * ln((100-20)/(100-63)))
+  //   k ≈ 30.47
+  const K  = 30.47;
+  const Tw = 100; // boiling water °C
+
+  const EGG_TYPES = {
+    soft:    { Ty: 63, icon: '🥚', label: 'Bløtkokt', msg: 'Bløtt og deilig indre 🥚' },
+    smiling: { Ty: 71, icon: '😊', label: 'Smilende',  msg: 'Perfekt smilende eggeplomme 😊' },
+    hard:    { Ty: 78, icon: '💪', label: 'Hardkokt',  msg: 'Gjennomkokt og solid 💪' }
+  };
+  const EGG_SIZES = {
+    small:  { mass: 50, label: 'Liten' },
+    medium: { mass: 60, label: 'Medium' },
+    large:  { mass: 70, label: 'Stor' }
+  };
+  const EGG_TEMPS = {
+    fridge: { T: 4,  label: 'kjøleskap (4 °C)' },
+    room:   { T: 20, label: 'romtemperatur (20 °C)' }
+  };
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let currentType = null;
+  let currentSize = 'medium';
+  let currentTemp = 'room';
+  let totalSeconds = 0;
+  let remaining    = 0;
+  let interval     = null;
+  let running      = false;
+  let audioCtx     = null;
+  let manualOffset = 0; // cumulative seconds added/removed manually
+
+  // ── DOM refs ───────────────────────────────────────────────────────────────
+  const digits       = document.getElementById('timerDigits');
+  const lbl          = document.getElementById('timerLabel');
+  const ring         = document.getElementById('ringProgress');
+  const bar          = document.getElementById('progressBar');
+  const btnStart     = document.getElementById('btnStart');
+  const doneAlert    = document.getElementById('doneAlert');
+  const doneSub      = document.getElementById('doneSub');
+  const timerSec     = document.getElementById('timerSection');
+  const adjustRow    = document.getElementById('adjustRow');
+  const formulaHint  = document.getElementById('formulaHint');
+
+  ring.style.strokeDasharray  = CIRCUMFERENCE;
+  ring.style.strokeDashoffset = CIRCUMFERENCE;
+
+  // ── Formula ────────────────────────────────────────────────────────────────
+  function calcSeconds(type, size, tempKey) {
+    const { Ty } = EGG_TYPES[type];
+    const { mass } = EGG_SIZES[size];
+    const T0 = EGG_TEMPS[tempKey].T;
+    // Williams: t = K * M^(2/3) * ln((Tw - T0) / (Tw - Ty))
+    return Math.max(30, Math.round(
+      K * Math.pow(mass, 2/3) * Math.log((Tw - T0) / (Tw - Ty))
+    ));
+  }
+
+  function formatMM_SS(secs) {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return m + ':' + s;
+  }
+
+  // ── Update egg-type button labels ──────────────────────────────────────────
+  function refreshLabels() {
+    for (const type of Object.keys(EGG_TYPES)) {
+      const sec = calcSeconds(type, currentSize, currentTemp);
+      document.getElementById('lbl-' + type).textContent = formatMM_SS(sec);
+    }
+  }
+
+  // ── Settings change ────────────────────────────────────────────────────────
+  function setSetting(btn) {
+    if (running) return;
+    const group = btn.dataset.group;
+    document.querySelectorAll(`.pill[data-group="${group}"]`).forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    if (group === 'size') currentSize = btn.dataset.val;
+    if (group === 'temp') currentTemp = btn.dataset.val;
+
+    refreshLabels();
+
+    // Recalculate timer if a type is already selected
+    if (currentType && !running) {
+      manualOffset = 0;
+      const secs = calcSeconds(currentType, currentSize, currentTemp);
+      totalSeconds = secs;
+      remaining    = secs;
+      stopTransitions();
+      setRingFraction(1);
+      bar.style.width = '0%';
+      updateDisplay(remaining);
+      updateFormulaHint();
+    }
+  }
+
+  // ── Egg-type selection ─────────────────────────────────────────────────────
+  function selectType(btn) {
+    if (running) return;
+    document.querySelectorAll('.egg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentType  = btn.dataset.type;
+    manualOffset = 0;
+
+    const secs   = calcSeconds(currentType, currentSize, currentTemp);
+    totalSeconds = secs;
+    remaining    = secs;
+
+    stopTransitions();
+    setRingFraction(1);
+    bar.style.width = '0%';
+    updateDisplay(remaining);
+    updateFormulaHint();
+
+    doneAlert.classList.remove('visible');
+    lbl.textContent = '⏳ Klar';
+    timerSec.classList.remove('running');
+    adjustRow.classList.add('visible');
+
+    btnStart.disabled     = false;
+    btnStart.textContent  = '▶ Start';
+    updateAdjButtons();
+  }
+
+  // ── Formula hint text ──────────────────────────────────────────────────────
+  function updateFormulaHint() {
+    if (!currentType) { formulaHint.textContent = ''; return; }
+    const sizeLabel = EGG_SIZES[currentSize].label.toLowerCase();
+    const tempLabel = EGG_TEMPS[currentTemp].label;
+    const baseMin   = formatMM_SS(calcSeconds(currentType, currentSize, currentTemp));
+    const offsetStr = manualOffset !== 0
+      ? ` · manuelt justert ${manualOffset > 0 ? '+' : ''}${manualOffset}s`
+      : '';
+    formulaHint.textContent =
+      `Williams-formel: ${sizeLabel} egg · ${tempLabel} → ${baseMin}${offsetStr}`;
+  }
+
+  // ── Manual time adjustment ─────────────────────────────────────────────────
+  function adjustTime(delta) {
+    if (!currentType || remaining <= 0) return;
+    const newRemaining = Math.max(10, remaining + delta);
+    const newTotal     = Math.max(10, totalSeconds + delta);
+    remaining    = newRemaining;
+    totalSeconds = newTotal;
+    manualOffset += delta;
+
+    stopTransitions();
+    updateDisplay(remaining);
+    const fraction = remaining / totalSeconds;
+    setRingFraction(fraction);
+    bar.style.width = ((1 - fraction) * 100) + '%';
+
+    updateFormulaHint();
+    updateAdjButtons();
+  }
+
+  function updateAdjButtons() {
+    document.getElementById('adjMinus60').disabled = remaining <= 60;
+    document.getElementById('adjMinus30').disabled = remaining <= 30;
+    document.getElementById('adjPlus30').disabled  = false;
+    document.getElementById('adjPlus60').disabled  = false;
+  }
+
+  // ── Start / Pause ──────────────────────────────────────────────────────────
+  function startStop() {
+    if (!currentType) return;
+
+    if (running) {
+      clearInterval(interval);
+      running = false;
+      btnStart.textContent = '▶ Fortsett';
+      lbl.textContent = '⏸ Pauset';
+      timerSec.classList.remove('running');
+      adjustRow.classList.add('visible');
+    } else {
+      if (remaining <= 0) return;
+      running = true;
+      btnStart.textContent = '⏸ Pause';
+      lbl.textContent = '🔥 Koker...';
+      timerSec.classList.add('running');
+      adjustRow.classList.remove('visible'); // hide adjust while running
+
+      bar.style.transition  = 'width 1s linear';
+      ring.style.transition = 'stroke-dashoffset 1s linear';
+
+      interval = setInterval(tick, 1000);
+    }
+  }
+
+  function tick() {
+    remaining--;
+    updateDisplay(remaining);
+    const progress = 1 - remaining / totalSeconds;
+    setRingFraction(remaining / totalSeconds);
+    bar.style.width = (progress * 100) + '%';
+
+    if (remaining <= 0) {
+      clearInterval(interval);
+      running = false;
+      onDone();
+    }
+  }
+
+  function onDone() {
+    timerSec.classList.remove('running');
+    lbl.textContent = '✅ Ferdig!';
+    digits.textContent = '00:00';
+    btnStart.textContent = '▶ Start';
+    btnStart.disabled = true;
+    adjustRow.classList.remove('visible');
+
+    doneSub.textContent = EGG_TYPES[currentType]?.msg ?? 'Nyt måltidet ditt 🍽️';
+    doneAlert.classList.add('visible');
+
+    playBeep();
+    vibrate();
+  }
+
+  // ── Reset ──────────────────────────────────────────────────────────────────
+  function reset() {
+    clearInterval(interval);
+    running      = false;
+    interval     = null;
+    currentType  = null;
+    manualOffset = 0;
+    totalSeconds = 0;
+    remaining    = 0;
+
+    document.querySelectorAll('.egg-btn').forEach(b => b.classList.remove('active'));
+    digits.textContent    = '--:--';
+    lbl.textContent       = '⏳ Klar';
+    timerSec.classList.remove('running');
+    adjustRow.classList.remove('visible');
+    formulaHint.textContent = '';
+
+    stopTransitions();
+    bar.style.width = '0%';
+    setRingFraction(1);
+
+    doneAlert.classList.remove('visible');
+    btnStart.disabled    = true;
+    btnStart.textContent = '▶ Start';
+
+    refreshLabels();
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function updateDisplay(secs) {
+    digits.textContent = formatMM_SS(Math.max(0, secs));
+  }
+
+  function setRingFraction(fraction) {
+    // fraction 1 = full ring, 0 = empty
+    ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - Math.max(0, Math.min(1, fraction)));
+  }
+
+  function stopTransitions() {
+    bar.style.transition  = 'none';
+    ring.style.transition = 'none';
+  }
+
+  // ── Sound ──────────────────────────────────────────────────────────────────
+  function playBeep() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = [523, 659, 784, 1047]; // C5 E5 G5 C6
+      notes.forEach((freq, i) => {
+        const osc  = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = audioCtx.currentTime + i * 0.22;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.35, t + 0.05);
+        gain.gain.linearRampToValueAtTime(0,    t + 0.20);
+        osc.start(t);
+        osc.stop(t + 0.25);
+      });
+    } catch(e) { /* silent fallback */ }
+  }
+
+  function vibrate() {
+    if ('vibrate' in navigator) navigator.vibrate([200,100,200,100,400]);
+  }
+
+  // Unlock AudioContext on first touch (iOS)
+  document.addEventListener('touchstart', () => {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }, { once: true });
+
+  // Init labels
+  refreshLabels();
+
+  // ── Williams modal ─────────────────────────────────────────────────────────
+  function openWilliams() {
+    document.getElementById('williamsModal').classList.add('open');
+  }
+  function closeWilliams() {
+    document.getElementById('williamsModal').classList.remove('open');
+  }
+  function closeWilliamsOutside(e) {
+    if (e.target === document.getElementById('williamsModal')) closeWilliams();
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeWilliams(); });
+</script>
+</body>
+</html>

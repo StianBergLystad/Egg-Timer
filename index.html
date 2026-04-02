@@ -663,6 +663,7 @@
   let running      = false;
   let audioCtx     = null;
   let manualOffset = 0;
+  const STATE_KEY  = 'egg-timer-state';
 
   const digits    = document.getElementById('timerDigits');
   const lbl       = document.getElementById('timerLabel');
@@ -677,6 +678,69 @@
 
   ring.style.strokeDasharray  = CIRCUMFERENCE;
   ring.style.strokeDashoffset = CIRCUMFERENCE;
+
+  // ── Timer state persistence ────────────────────────────────────────────────
+  function saveState() {
+    localStorage.setItem(STATE_KEY, JSON.stringify({
+      currentType, currentSize, currentTemp,
+      totalSeconds, manualOffset,
+      endTime:   running ? Date.now() + remaining * 1000 : null,
+      remaining: running ? null : remaining
+    }));
+  }
+  function clearState() { localStorage.removeItem(STATE_KEY); }
+  function restoreState() {
+    let s;
+    try { s = JSON.parse(localStorage.getItem(STATE_KEY)); } catch(e) {}
+    if (!s || !s.currentType || !EGG_TYPES[s.currentType]) { clearState(); return; }
+
+    currentType  = s.currentType;
+    currentSize  = s.currentSize  || 'medium';
+    currentTemp  = s.currentTemp  || 'room';
+    totalSeconds = s.totalSeconds || 0;
+    manualOffset = s.manualOffset || 0;
+
+    const rem = s.endTime
+      ? Math.round((s.endTime - Date.now()) / 1000)
+      : (s.remaining || 0);
+    if (rem <= 0 || totalSeconds <= 0) { clearState(); return; }
+    remaining = rem;
+
+    // Restore pill/button active states
+    document.querySelectorAll('.egg-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.type === currentType));
+    document.querySelectorAll('.pill[data-group="size"]').forEach(b =>
+      b.classList.toggle('active', b.dataset.val === currentSize));
+    document.querySelectorAll('.pill[data-group="temp"]').forEach(b =>
+      b.classList.toggle('active', b.dataset.val === currentTemp));
+
+    stopTransitions();
+    updateDisplay(remaining);
+    setRingFraction(remaining / totalSeconds);
+    bar.style.width = ((1 - remaining / totalSeconds) * 100) + '%';
+    updateFormulaHint();
+    doneAlert.classList.remove('visible');
+    btnStart.disabled = false;
+    updateAdjButtons();
+
+    if (s.endTime) {
+      // Was running — resume automatically
+      running = true;
+      lbl.textContent      = t('timer.cooking');
+      btnStart.textContent = t('btn.pause');
+      timerSec.classList.add('running');
+      adjustRow.classList.remove('visible');
+      bar.style.transition  = 'width 1s linear';
+      ring.style.transition = 'stroke-dashoffset 1s linear';
+      interval = setInterval(tick, 1000);
+    } else {
+      // Was paused
+      lbl.textContent      = t('timer.paused');
+      btnStart.textContent = t('btn.continue');
+      timerSec.classList.remove('running');
+      adjustRow.classList.add('visible');
+    }
+  }
 
   function calcSeconds(type, size, tempKey) {
     const { Ty }  = EGG_TYPES[type];
@@ -757,6 +821,7 @@
     setRingFraction(fraction);
     bar.style.width = ((1 - fraction) * 100) + '%';
     updateFormulaHint(); updateAdjButtons();
+    saveState();
   }
 
   function updateAdjButtons() {
@@ -774,6 +839,7 @@
       lbl.textContent = t('timer.paused');
       timerSec.classList.remove('running');
       adjustRow.classList.add('visible');
+      saveState();
     } else {
       if (remaining <= 0) return;
       running = true;
@@ -783,6 +849,7 @@
       adjustRow.classList.remove('visible');
       bar.style.transition  = 'width 1s linear';
       ring.style.transition = 'stroke-dashoffset 1s linear';
+      saveState();
       interval = setInterval(tick, 1000);
     }
   }
@@ -805,6 +872,7 @@
     adjustRow.classList.remove('visible');
     doneSub.textContent = t('type.' + currentType + '.msg');
     doneAlert.classList.add('visible');
+    clearState();
     playBeep(); vibrate();
   }
 
@@ -823,6 +891,7 @@
     doneAlert.classList.remove('visible');
     btnStart.disabled    = true;
     btnStart.textContent = t('btn.start');
+    clearState();
     refreshLabels();
   }
 
@@ -942,6 +1011,7 @@
   applyHoliday();   // sets theme + holiday text first
   applyLang();      // then applies language (incl. overriding static i18n keys)
   refreshLabels();
+  restoreState();   // resume any in-progress timer
 
   // ── Service Worker ─────────────────────────────────────────────────────────
   if ('serviceWorker' in navigator) {

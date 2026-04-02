@@ -305,6 +305,54 @@
     @keyframes popIn  { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
     @keyframes pulse  { 0%,100% { opacity: 1; } 50% { opacity: .65; } }
+
+    /* ── Dark mode ── */
+    body.dark {
+      --bg1:#1e1600;--bg2:#171000;--bg3:#100b00;--card:#261c00;--surface:#1c1400;--border:#3d2c00;--bar-bg:#171000;
+      --p-lite:#ffd54f;--p-mid:#f9a825;--p-warm:#fb8c00;--p-pale:#3a2900;
+      --ring1:#ffe082;--ring2:#f9a825;--ring3:#fb8c00;
+      --txt-head:#ffd54f;--txt-dark:#ffe082;--txt-mid:#ffc107;
+      --txt-soft:#e6a800;--txt-mute:#cc9500;--txt-btn:#1e1600;
+      --shd-card:rgba(249,168,37,0.07);--shd-btn:rgba(249,168,37,0.28);--shd-active:rgba(249,168,37,0.22);
+    }
+    body.dark[data-theme="paaske"] {
+      --bg1:#0f1a00;--bg2:#0a1200;--bg3:#060c00;--card:#141f00;--surface:#0c1500;--border:#253800;--bar-bg:#0a1200;
+      --txt-head:#a5d66b;--txt-dark:#c5e8a0;--txt-mid:#8bc34a;--txt-soft:#69a33e;--txt-mute:#558b2f;--txt-btn:#060c00;
+      --shd-card:rgba(74,124,32,0.08);--shd-btn:rgba(74,124,32,0.35);--shd-active:rgba(74,124,32,0.28);
+    }
+    body.dark[data-theme="jul"] {
+      --bg1:#1f0404;--bg2:#180303;--bg3:#100202;--card:#240505;--surface:#1a0404;--border:#420e0e;--bar-bg:#180303;
+      --txt-head:#ef9a9a;--txt-dark:#ffcdd2;--txt-mid:#ef9a9a;--txt-soft:#e57373;--txt-mute:#c62828;--txt-btn:#1f0404;
+      --shd-card:rgba(198,40,40,0.07);--shd-btn:rgba(198,40,40,0.32);--shd-active:rgba(198,40,40,0.25);
+    }
+    body.dark[data-theme="mai17"] {
+      --bg1:#001828;--bg2:#001020;--bg3:#000a18;--card:#001e30;--surface:#001428;--border:#002a50;--bar-bg:#001020;
+      --txt-head:#90caf9;--txt-dark:#bbdefb;--txt-mid:#64b5f6;--txt-soft:#42a5f5;--txt-mute:#1e88e5;--txt-btn:#001828;
+      --shd-card:rgba(33,150,243,0.07);--shd-btn:rgba(198,40,40,0.32);--shd-active:rgba(198,40,40,0.25);
+    }
+    body.dark[data-theme="pinse"] {
+      --bg1:#001520;--bg2:#000e18;--bg3:#000810;--card:#001a28;--surface:#001220;--border:#002840;--bar-bg:#000e18;
+      --txt-head:#81d4fa;--txt-dark:#b3e5fc;--txt-mid:#4fc3f7;--txt-soft:#29b6f6;--txt-mute:#0288d1;--txt-btn:#001520;
+      --shd-card:rgba(2,119,189,0.07);--shd-btn:rgba(2,119,189,0.35);--shd-active:rgba(2,119,189,0.28);
+    }
+
+    /* ── Dark mode toggle button ── */
+    .btn-dark {
+      position: absolute;
+      top: 18px; left: 20px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 11px;
+      font-size: 0.74rem; font-weight: 700;
+      color: var(--txt-mid);
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-dark:hover  { background: var(--bar-bg); border-color: var(--p-mid); }
+    .btn-dark:active { transform: scale(.95); }
   </style>
 </head>
 <body>
@@ -313,6 +361,8 @@
 <div class="app">
   <!-- Language toggle -->
   <button class="btn-lang" id="btnLang" onclick="toggleLang()">🇬🇧 EN</button>
+  <!-- Dark mode toggle -->
+  <button class="btn-dark" id="btnDark" onclick="toggleDark()">🌙</button>
 
   <div class="app-title">🥚 Egg-Timer</div>
   <div class="app-subtitle">
@@ -368,6 +418,20 @@
         </button>
         <button class="pill active" data-group="temp" data-val="room" onclick="setSetting(this)">
           <span data-i18n="temp.room">🌡️ Romtemp</span><span class="pill-sub">~20 °C</span>
+        </button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-lbl" data-i18n="alt.label">Høyde</span>
+      <div class="pill-group">
+        <button class="pill active" data-group="alt" data-val="0" onclick="setSetting(this)">
+          <span data-i18n="alt.sea">Sjønivå</span><span class="pill-sub">100 °C</span>
+        </button>
+        <button class="pill" data-group="alt" data-val="500" onclick="setSetting(this)">
+          <span>500 m</span><span class="pill-sub">98 °C</span>
+        </button>
+        <button class="pill" data-group="alt" data-val="1000" onclick="setSetting(this)">
+          <span>1000 m</span><span class="pill-sub">97 °C</span>
         </button>
       </div>
     </div>
@@ -512,6 +576,9 @@
       'holiday.mai17.subtitle':  'Kokt i ekte norsk ånd siden 1814 🇳🇴',
       'holiday.pinse.banner':    '🕊️ God pinse!',
       'holiday.pinse.subtitle':  'Pinsehøytid med Williams-formelens velsignelse 🕊️',
+      // altitude
+      'alt.label': 'Høyde',
+      'alt.sea':   'Sjønivå',
       // lang button
       'lang.toggle': '🇬🇧 EN',
     },
@@ -564,6 +631,9 @@
       'holiday.mai17.subtitle':  'Cooked in true Norwegian spirit since 1814 🇳🇴',
       'holiday.pinse.banner':    '🕊️ Happy Whitsun!',
       'holiday.pinse.subtitle':  'Whitsun with the blessing of the Williams formula 🕊️',
+      // altitude
+      'alt.label': 'Altitude',
+      'alt.sea':   'Sea level',
       'lang.toggle': '🇳🇴 NO',
     }
   };
@@ -657,9 +727,10 @@
     room:   { T: 20 }
   };
 
-  let currentType  = null;
-  let currentSize  = 'medium';
-  let currentTemp  = 'room';
+  let currentType     = null;
+  let currentSize     = 'medium';
+  let currentTemp     = 'room';
+  let currentAltitude = 0;
   let totalSeconds = 0;
   let remaining    = 0;
   let interval     = null;
@@ -685,7 +756,7 @@
   // ── Timer state persistence ────────────────────────────────────────────────
   function saveState() {
     localStorage.setItem(STATE_KEY, JSON.stringify({
-      currentType, currentSize, currentTemp,
+      currentType, currentSize, currentTemp, currentAltitude,
       totalSeconds, manualOffset,
       endTime:   running ? Date.now() + remaining * 1000 : null,
       remaining: running ? null : remaining
@@ -697,11 +768,12 @@
     try { s = JSON.parse(localStorage.getItem(STATE_KEY)); } catch(e) {}
     if (!s || !s.currentType || !EGG_TYPES[s.currentType]) { clearState(); return; }
 
-    currentType  = s.currentType;
-    currentSize  = s.currentSize  || 'medium';
-    currentTemp  = s.currentTemp  || 'room';
-    totalSeconds = s.totalSeconds || 0;
-    manualOffset = s.manualOffset || 0;
+    currentType     = s.currentType;
+    currentSize     = s.currentSize     || 'medium';
+    currentTemp     = s.currentTemp     || 'room';
+    currentAltitude = s.currentAltitude || 0;
+    totalSeconds    = s.totalSeconds    || 0;
+    manualOffset    = s.manualOffset    || 0;
 
     const rem = s.endTime
       ? Math.round((s.endTime - Date.now()) / 1000)
@@ -716,6 +788,8 @@
       b.classList.toggle('active', b.dataset.val === currentSize));
     document.querySelectorAll('.pill[data-group="temp"]').forEach(b =>
       b.classList.toggle('active', b.dataset.val === currentTemp));
+    document.querySelectorAll('.pill[data-group="alt"]').forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.val, 10) === currentAltitude));
 
     stopTransitions();
     updateDisplay(remaining);
@@ -735,6 +809,7 @@
       adjustRow.classList.remove('visible');
       bar.style.transition  = 'width 1s linear';
       ring.style.transition = 'stroke-dashoffset 1s linear';
+      acquireWakeLock();
       interval = setInterval(tick, 1000);
     } else {
       // Was paused
@@ -746,11 +821,12 @@
   }
 
   function calcSeconds(type, size, tempKey) {
-    const { Ty }  = EGG_TYPES[type];
+    const { Ty }   = EGG_TYPES[type];
     const { mass } = EGG_SIZES[size];
-    const T0      = EGG_TEMPS[tempKey].T;
+    const T0       = EGG_TEMPS[tempKey].T;
+    const Tw_eff   = Tw - currentAltitude * 0.0034;
     return Math.max(30, Math.round(
-      K * Math.pow(mass, 2/3) * Math.log((Tw - T0) / (Tw - Ty))
+      K * Math.pow(mass, 2/3) * Math.log((Tw_eff - T0) / (Tw_eff - Ty))
     ));
   }
 
@@ -770,8 +846,10 @@
     const group = btn.dataset.group;
     document.querySelectorAll(`.pill[data-group="${group}"]`).forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
-    if (group === 'size') currentSize = btn.dataset.val;
-    if (group === 'temp') currentTemp = btn.dataset.val;
+    if (group === 'size') currentSize     = btn.dataset.val;
+    if (group === 'temp') currentTemp     = btn.dataset.val;
+    if (group === 'alt')  currentAltitude = parseInt(btn.dataset.val, 10);
+    haptic();
     refreshLabels();
     if (currentType && !running) {
       manualOffset = 0;
@@ -785,6 +863,7 @@
 
   function selectType(btn) {
     if (running) return;
+    haptic();
     document.querySelectorAll('.egg-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentType = btn.dataset.type; manualOffset = 0;
@@ -810,11 +889,15 @@
     const offsetStr = manualOffset !== 0
       ? ` · ${t('formula.manual')} ${manualOffset > 0 ? '+' : ''}${manualOffset}s`
       : '';
-    formulaHint.textContent = `${t('formula.prefix')}: ${sizeHint} egg · ${tempHint} → ${baseMin}${offsetStr}`;
+    const altStr = currentAltitude > 0
+      ? ` · ${currentAltitude} m (${(Tw - currentAltitude * 0.0034).toFixed(1)} °C)`
+      : '';
+    formulaHint.textContent = `${t('formula.prefix')}: ${sizeHint} egg · ${tempHint}${altStr} → ${baseMin}${offsetStr}`;
   }
 
   function adjustTime(delta) {
     if (!currentType || remaining <= 0) return;
+    haptic();
     remaining    = Math.max(10, remaining    + delta);
     totalSeconds = Math.max(10, totalSeconds + delta);
     manualOffset += delta;
@@ -836,9 +919,11 @@
 
   function startStop() {
     if (!currentType) return;
+    haptic();
     unlockAudio();
     if (running) {
       clearInterval(interval); running = false;
+      releaseWakeLock();
       btnStart.textContent = t('btn.continue');
       lbl.textContent = t('timer.paused');
       timerSec.classList.remove('running');
@@ -847,6 +932,7 @@
     } else {
       if (remaining <= 0) return;
       running = true;
+      acquireWakeLock();
       btnStart.textContent = t('btn.pause');
       lbl.textContent = t('timer.cooking');
       timerSec.classList.add('running');
@@ -877,12 +963,15 @@
     doneSub.textContent = t('type.' + currentType + '.msg');
     doneAlert.classList.add('visible');
     clearState();
+    releaseWakeLock();
     playBeep(); vibrate();
   }
 
   function reset() {
+    haptic();
     clearInterval(interval);
     running = false; interval = null;
+    releaseWakeLock();
     currentType = null; manualOffset = 0;
     totalSeconds = 0; remaining = 0;
     document.querySelectorAll('.egg-btn').forEach(b => b.classList.remove('active'));
@@ -934,6 +1023,36 @@
   function vibrate() {
     if ('vibrate' in navigator) navigator.vibrate([200,100,200,100,400]);
   }
+  function haptic(ms = 8) {
+    if ('vibrate' in navigator) navigator.vibrate(ms);
+  }
+
+  // ── Wake Lock ──────────────────────────────────────────────────────────────
+  let wakeLock = null;
+  async function acquireWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      }
+    } catch(e) {}
+  }
+  function releaseWakeLock() {
+    if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  }
+  // Re-acquire wake lock if page becomes visible again while timer is running
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && running) acquireWakeLock();
+  });
+
+  // ── Dark mode ──────────────────────────────────────────────────────────────
+  function toggleDark() {
+    haptic();
+    const dark = document.body.classList.toggle('dark');
+    localStorage.setItem('egg-timer-dark', dark ? '1' : '0');
+    document.getElementById('btnDark').textContent = dark ? '☀️' : '🌙';
+  }
+
   // Unlock AudioContext on any user interaction (touchstart + click covers all devices)
   document.addEventListener('touchstart', unlockAudio);
   document.addEventListener('click',      unlockAudio);
@@ -1027,6 +1146,12 @@
   applyLang();      // then applies language (incl. overriding static i18n keys)
   refreshLabels();
   restoreState();   // resume any in-progress timer
+
+  // Dark mode
+  if (localStorage.getItem('egg-timer-dark') === '1') {
+    document.body.classList.add('dark');
+    document.getElementById('btnDark').textContent = '☀️';
+  }
 
   // ── Service Worker ─────────────────────────────────────────────────────────
   if ('serviceWorker' in navigator) {

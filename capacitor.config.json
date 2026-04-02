@@ -1,0 +1,8 @@
+{
+  "appId": "no.berglystad.eggtimer",
+  "appName": "Egg-Timer",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

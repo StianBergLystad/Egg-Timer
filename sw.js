@@ -1,4 +1,4 @@
-const CACHE = 'egg-timer-v3';
+const CACHE = 'egg-timer-v4';
 // Relative paths work regardless of whether the app is served from
 // the root (localhost) or a subpath (GitHub Pages /Egg-Timer/)
 const ASSETS = [

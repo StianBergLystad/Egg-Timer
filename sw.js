@@ -39,13 +39,13 @@ self.addEventListener('fetch', event => {
     caches.match(event.request).then(cached => {
       if (cached) return cached;
       return fetch(event.request).then(response => {
-        // Cache successful responses
-        if (response && response.status === 200) {
+        // Only cache valid, successful, non-opaque responses
+        if (response && response.ok && response.type === 'basic') {
           const copy = response.clone();
           caches.open(CACHE).then(cache => cache.put(event.request, copy));
         }
         return response;
-      });
+      }).catch(() => caches.match('./index.html'));
     })
   );
 });

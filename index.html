@@ -16,6 +16,30 @@
   <meta name="apple-mobile-web-app-title" content="Egg-Timer" />
   <link rel="apple-touch-icon" href="icon.svg" />
 
+  <!-- Security -->
+  <!--
+    Content Security Policy:
+    - default-src / script-src / style-src trenger 'unsafe-inline' fordi appen er én fil (by design).
+    - object-src 'none' blokkerer Flash/plugins.
+    - base-uri 'self' forhindrer base-tag-injeksjon.
+    - frame-ancestors 'none' hindrer clickjacking (erstatter X-Frame-Options for moderne nettlesere).
+    - upgrade-insecure-requests tvinger HTTPS for alle underressurser.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data:;
+    connect-src 'self';
+    worker-src 'self';
+    manifest-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    frame-ancestors 'none';
+    upgrade-insecure-requests;
+  " />
+  <meta name="referrer" content="no-referrer" />
+
   <!-- SEO / sharing -->
   <meta name="description" content="Kok egg perfekt med Williams-formelen. Velg størrelse og starttemperatur." />
   <style>
@@ -868,8 +892,8 @@
   // ── Service Worker registration ────────────────────────────────────────────
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .catch(() => { /* SW unavailable in this environment — no-op */ });
+      navigator.serviceWorker.register('sw.js', { scope: './' })
+        .catch(err => console.warn('Service Worker registration failed:', err));
     });
   }
 </script>

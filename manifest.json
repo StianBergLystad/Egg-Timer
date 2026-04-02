@@ -24,5 +24,5 @@
     }
   ],
   "categories": ["food", "utilities"],
-  "screenshots": []
+  "prefer_related_applications": false
 }

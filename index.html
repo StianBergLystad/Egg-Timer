@@ -1119,6 +1119,8 @@
     const h = HOLIDAYS[id];
 
     // Fargetema på body
+    // Whitelist-validert for å forhindre DOM-injeksjon
+    if (!['paaske', 'jul', 'mai17', 'pinse'].includes(id)) return;
     document.body.dataset.theme = id;
 
     // Browser-adresselinje-farge (Android Chrome)

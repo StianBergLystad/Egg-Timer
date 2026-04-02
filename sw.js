@@ -45,7 +45,9 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE).then(cache => cache.put(event.request, copy));
         }
         return response;
-      }).catch(() => caches.match('./index.html'));
+      }).catch(() =>
+        caches.match('./index.html').then(res => res || new Response('Offline', { status: 503 }))
+      );
     })
   );
 });

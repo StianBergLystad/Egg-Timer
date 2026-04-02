@@ -1,9 +1,11 @@
 const CACHE = 'egg-timer-v1';
+// Relative paths work regardless of whether the app is served from
+// the root (localhost) or a subpath (GitHub Pages /Egg-Timer/)
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon.svg'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon.svg'
 ];
 
 // Install: cache all assets
@@ -30,6 +32,8 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin !== location.origin) return;
+  // Only cache requests within this app's scope
+  if (!url.pathname.startsWith(self.registration.scope.replace(location.origin, ''))) return;
 
   event.respondWith(
     caches.match(event.request).then(cached => {

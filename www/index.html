@@ -1046,8 +1046,10 @@
 
   // ── Sound ──────────────────────────────────────────────────────────────────
   function unlockAudio() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch(e) {}
   }
   function playBeep() {
     try {

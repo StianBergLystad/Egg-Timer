@@ -1327,6 +1327,12 @@
   refreshLabels();
   restoreState();   // resume any in-progress timer
 
+  // Pre-select default egg type so Start is enabled immediately
+  if (!currentType) {
+    const defaultBtn = document.querySelector('.egg-btn[data-type="smiling"]');
+    if (defaultBtn) selectType(defaultBtn);
+  }
+
   // Dark mode
   if (localStorage.getItem('egg-timer-dark') === '1') {
     document.body.classList.add('dark');

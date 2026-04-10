@@ -1215,7 +1215,8 @@
     if (multiEggs.length >= 4) return;
     multiEggCounter++;
     const id = multiEggCounter;
-    const egg = { id, type: null, size: 'medium', temp: 'room', total: 0, remaining: 0, interval: null, done: false };
+    const defaultType = 'smiling';
+    const egg = { id, type: defaultType, size: 'medium', temp: 'room', total: 0, remaining: 0, interval: null, done: false };
     multiEggs.push(egg);
 
     const card = document.createElement('div');
@@ -1227,9 +1228,9 @@
         <button class="megg-remove" onclick="multiRemoveEgg(${id})" title="Fjern">✕</button>
       </div>
       <div class="megg-types">
-        <button class="megg-type-btn" data-eid="${id}" data-type="soft"    onclick="multiSetType(${id},'soft')">Bløtkokt</button>
-        <button class="megg-type-btn" data-eid="${id}" data-type="smiling" onclick="multiSetType(${id},'smiling')">Smilende</button>
-        <button class="megg-type-btn" data-eid="${id}" data-type="hard"    onclick="multiSetType(${id},'hard')">Hardkokt</button>
+        <button class="megg-type-btn${defaultType==='soft'?' active':''}" data-eid="${id}" data-type="soft"    onclick="multiSetType(${id},'soft')">Bløtkokt</button>
+        <button class="megg-type-btn${defaultType==='smiling'?' active':''}" data-eid="${id}" data-type="smiling" onclick="multiSetType(${id},'smiling')">Smilende</button>
+        <button class="megg-type-btn${defaultType==='hard'?' active':''}" data-eid="${id}" data-type="hard"    onclick="multiSetType(${id},'hard')">Hardkokt</button>
       </div>
       <div class="megg-pills">
         <button class="megg-pill${egg.size==='small'?' active':''}"  data-eid="${id}" data-group="size" data-val="small"  onclick="multiSetPill(${id},'size','small')">Liten</button>
@@ -1242,6 +1243,7 @@
       <div class="megg-bar-wrap"><div class="megg-bar" id="megg-bar-${id}"></div></div>
       <div class="megg-done-msg" id="megg-done-${id}" style="display:none">✅ Klart!</div>`;
     document.getElementById('eggCards').appendChild(card);
+    multiCalc(egg);
     multiUpdateButtons();
   }
 
